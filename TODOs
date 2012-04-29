@@ -1,0 +1,50 @@
+Ok so here's what I have so far:
+
+- Jeenode/link acting as rf12 receiver and serial to usb converter ("Receiver")
+- Jeenode communicating environmental data to the receiver via rf12
+	- Currently carries gravity board (3-axis accelerometer data)
+
+Basic concept:
+- Have a small wireless "tactor" which can provide environmental data such as
+  - lighting
+  - positioning (x, y, z)
+  - direction (compass)
+- This data can be fed in realtime into a receiver plugin, allowing stellarium
+  to become "aware" of its surroundings. Point the "tactor" where you want
+  stellarium to go.
+- One use for this is to pop the "tactor" on your telescope; whatever your
+  scope sees, stellarium sees. It's sort of the reverse of GOTO.
+
+
+TODO:
+[X] (Stupid) get slackware to understand (udev?) that I'm the owner of ttyUSB*
+[!] Make slackbuild for libftdi-git (this is nontrivial as it uses a custom
+				     make system)
+    *** I gave up on this, the build system is to esoteric; I spent over
+        an hour figuring out how to do it, but it seems impossible. Perhaps
+	the git version is not compilable at this time ***
+[X] Install precompiled libftdi version, 32-bit
+	- Very difficult to compile. Has required a LOT of additional mods
+	  to the build script. Now I'm stuck because libusb, from libcompat,
+	  is 32-bit. So I have to cross-compile libftdi (and ALL programs 
+          hooking into it, including stellarium - an *enormous* undertaking.
+	  So frustrated and angry. This is SO FUCKING FAR away from what I
+	  want to work on. I don't WANT TO WORK on fucking libftdi, I just
+	  want to FUCKING USE IT. I fucking HATE this FUCKING SHIT. I'm NEVER
+	  going to reach any of my fucking goals - it's just a fucking
+	  never-ending fucking downward spiral. KILL MEEEEEEEEEEEEEEEEEEeeeeeeee
+	  ........so now I am researching cross-compiling 32 bit code on 64bit
+	  when using autoconf. Probably yet another fucking impossible task.
+	  Finally did it. 32-bit it is.
+
+
+    [ ] Make slackbuild for libusb (required by liftdi)
+    [ ] Make slackbuild for libconfuse (required by libftdi)
+
+[ ] Write C/C++ interface using libftdi to pull serial data from the receiver
+   [ ] Expand interface to become a full-fledged stellarium plugin(C++),
+      see http://bazaar.launchpad.net/~stellarium/stellarium/trunk/view/head:/plugins/HelloStelModule/src/HelloStelModule.hpp
+[ ] Try to salvage the broken heading board:
+    it has temp&hum onboard as well as a heading instrument(compass + z-axis):
+[ ] Make my own 'plug' for an LDR so that we can, ultimately, togle night-mode
+    in stellarium if it's dark.
