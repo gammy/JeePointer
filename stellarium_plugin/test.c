@@ -3,6 +3,7 @@
 #define GAM_USE_LIBPNG
 #include "libgam.h"
 
+#define TAIL_COUNT 10
 
 struct ftdi_context *
 bub_init(unsigned int baud_rate,
@@ -115,10 +116,18 @@ int main(int argc, char *argv[]) {
 
 	/*********************************************************************/ 
 
-	struct { 
+	typedef struct { 
 		int x, y, z;
-	} point = {.5 * screen.w, .5 * screen.w, 0};
-	//} point = {0, 0, 0};
+	} point_t;
+	
+	point_t point[TAIL_COUNT];
+
+	int i;
+	for(i = 0; i < TAIL_COUNT; i++) {
+		point[i].x = (.5 * screen.w - .5 * spot->w);
+		point[i].y = (.5 * screen.h - .5 * spot->h);
+		point[i].z = 0;
+	}
 
 	SDL_Event event;
 	SDL_Rect rect;
@@ -132,31 +141,61 @@ int main(int argc, char *argv[]) {
 	
 		SDL_BlitSurface(backdrop, NULL, screen.surface, NULL);
 
+#if 1
 		memset(&buf, 0, BUF_SIZE);
 		rxb = ftdi_read_data(ftdic, buf, BUF_SIZE);
 
-		if(rxb == BUF_SIZE) {
+		if(rxb > 0) {
+			if(rxb == BUF_SIZE) {
+				if(buf[BUF_SIZE - 1] == 10 && 
+				   buf[BUF_SIZE - 2] == 13) {
+#endif
+						int16_t x, y, z;
 
-			if(buf[BUF_SIZE - 1] == 10 && 
-			   buf[BUF_SIZE - 2] == 13) {
+						x = (buf[1] << 8) ^ buf[0];
+						y = (buf[3] << 8) ^ buf[2];
+						z = (buf[5] << 8) ^ buf[4];
 
-					int16_t x, y, z;
+#if 0
+						x = -256 + (rand() % 512);
+						y = -256 + (rand() % 512);
+#endif
 
-					x = (buf[1] << 8) ^ buf[0];
-					y = (buf[3] << 8) ^ buf[2];
-					z = (buf[5] << 8) ^ buf[4];
+						printf("%4d %4d %4d\n", x, y, z);
+						//printf("%1.3f %1.3f %1.3f\n", 
+						//       x / 256.0, 
+						//       y / 256.0, 
+						//       z / 256.0);
 
-					printf("%4d %4d %4d\n", x, y, z);
+						point[0].x = (.5 * screen.w - .5 * spot->w) + x;
+						point[0].y = (.5 * screen.h - .5 * spot->h) + y;
 
-					rect.x = point.x - (.5 * spot->w);
-					rect.y = point.y - (.5 * spot->h);
+						for(i = TAIL_COUNT - 1; i > 0; i--) {
+							point[i].x = point[i - 1].x;
+							point[i].y = point[i - 1].y;
+							point[i].z = point[i - 1].z;
+						}
+
+
+				} else {
+					fprintf(stderr, "Packet of right length but wrong signature\n");
+				}
+			} else {
+				fprintf(stderr, "Packet of unknown size %ld\n", rxb);
 			}
-		} else {
-			if(rxb != 0)
-				printf("Nope, got %ld\n", rxb);
+		} else if(rxb < 0){
+			fprintf(stderr, "RX Error: %ld\n", rxb);
 		}
 
-		SDL_BlitSurface(spot, NULL, screen.surface, &rect);
+		for(i = TAIL_COUNT - 1; i >= 0; i--) {
+			rect.x = point[i].x;
+			rect.y = point[i].y;
+			SDL_SetAlpha(spot, 
+				     SDL_SRCALPHA, 
+				     (255 / TAIL_COUNT) * (TAIL_COUNT - i));
+			SDL_BlitSurface(spot, NULL, screen.surface, &rect);
+		}
+
 		SDL_Flip(screen.surface);
 	}
 
