@@ -1,6 +1,7 @@
 #include "test.h"
 
 #define GAM_USE_LIBPNG
+#define GAM_USE_SDLTTF
 #include "libgam.h"
 
 #define TAIL_COUNT 10
@@ -87,6 +88,9 @@ int main(int argc, char *argv[]) {
 		.surface = NULL
 	};
 
+	if(gam_init(GAM_ALL, 1) != EXIT_SUCCESS)
+		abort();
+
 	if(gam_video_init(&screen) != 0)
 		return(EXIT_FAILURE);
 	
@@ -114,6 +118,14 @@ int main(int argc, char *argv[]) {
 		return(EXIT_FAILURE);
 	}
 
+
+	TTF_Font *ttf = gam_init_sdlttf("StayPuft.ttf", 22);
+	if(ttf == NULL)
+		abort();
+	Uint32 text_color = SDL_MapRGB(screen.surface->format, 0, 0, 0);
+	
+	gam_state->print_mode = GAM_PRINT_BLEND;
+	gam_state->alpha = SDL_MapRGB(screen.surface->format, 140, 140, 160);
 	/*********************************************************************/ 
 
 	typedef struct { 
@@ -145,13 +157,7 @@ int main(int argc, char *argv[]) {
 	
 		SDL_BlitSurface(backdrop, NULL, screen.surface, NULL);
 
-#if 1
-		printf("Read %d bytes, offset = %d\n", BUF_SIZE - offs, offs);
 		rxb = ftdi_read_data(ftdic, &buf[offs], BUF_SIZE - offs);
-		if(rxb != 0)
-			printf("Got %d bytes\n", rxb);
-//		if(rxb != 0) 
-//			printf("* rxb = %2d, offs = %2d\n", rxb, offs);
 
 		if(rxb > 0) {
 			if(rxb == BUF_SIZE) {
@@ -160,19 +166,21 @@ int main(int argc, char *argv[]) {
 
 				if(buf[BUF_SIZE - 1] == 10 && 
 				   buf[BUF_SIZE - 2] == 13) {
-#endif
+
 						int16_t x, y, z;
 
 						x = (buf[1] << 8) ^ buf[0];
 						y = (buf[3] << 8) ^ buf[2];
 						z = (buf[5] << 8) ^ buf[4];
 
-#if 0
-						x = -256 + (rand() % 512);
-						y = -256 + (rand() % 512);
-#endif
 
 						printf("\e[32mGREAT SUCCESS\e[0m %4d %4d %4d\n", x, y, z);
+
+						//gam_print_core(screen.surface, 0, 0, text_color, "X: %d", x);
+						gam_print(screen.surface, 0, 0, ttf, text_color, "X: %1.2f", x / 256.0);
+						gam_print(screen.surface, 0, 23, ttf, text_color, "Y: %1.2f", y / 256.0);
+						gam_print(screen.surface, 0, 46, ttf, text_color, "Z: %1.2f", z / 256.0);
+
 						//printf("%1.3f %1.3f %1.3f\n", 
 						//       x / 256.0, 
 						//       y / 256.0, 
@@ -187,18 +195,22 @@ int main(int argc, char *argv[]) {
 							point[i].z = point[i - 1].z;
 						}
 
+						for(i = TAIL_COUNT - 1; i >= 0; i--) {
+							rect.x = point[i].x;
+							rect.y = point[i].y;
+							SDL_SetAlpha(spot, 
+								     SDL_SRCALPHA, 
+								     (255 / TAIL_COUNT) * (TAIL_COUNT - i));
+							SDL_BlitSurface(spot, NULL, screen.surface, &rect);
+						}
+
+						SDL_Flip(screen.surface);
 
 				} else {
 					fprintf(stderr, "Packet of right length but wrong signature\n");
 				}
 			} else if(rxb < BUF_SIZE) { // Underrun? 
 				fprintf(stderr, "Packet of unknown size %ld\n", rxb);
-				offs += rxb;
-				if(offs > BUF_SIZE) { 
-					fprintf(stderr, "Appending won't fit\n"); // FIXME
-					offs = 0;
-				}
-
 			} else {
 				abort();
 			}
@@ -206,16 +218,6 @@ int main(int argc, char *argv[]) {
 			fprintf(stderr, "RX Error: %ld: %s\n", rxb, ftdi_get_error_string(ftdic));
 		}
 
-		for(i = TAIL_COUNT - 1; i >= 0; i--) {
-			rect.x = point[i].x;
-			rect.y = point[i].y;
-			SDL_SetAlpha(spot, 
-				     SDL_SRCALPHA, 
-				     (255 / TAIL_COUNT) * (TAIL_COUNT - i));
-			SDL_BlitSurface(spot, NULL, screen.surface, &rect);
-		}
-
-		SDL_Flip(screen.surface);
 	}
 
 	int ret = 0;

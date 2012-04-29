@@ -2,7 +2,7 @@
 EXE = test
 SHELL = bash
 
-CFLAGS = -Wall
+CFLAGS = -ggdb3 -Wall
 LFLAGS = -lftdi -lgam
 CC     = gcc
 OBJS   = $(patsubst %.c, %.o, $(wildcard ./*.c))
