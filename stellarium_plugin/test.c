@@ -129,9 +129,13 @@ int main(int argc, char *argv[]) {
 		point[i].z = 0;
 	}
 
+	memset(&buf, 0, BUF_SIZE);
+	ftdi_usb_purge_rx_buffer(ftdic);
+
 	SDL_Event event;
 	SDL_Rect rect;
 	int busy = 1;
+	int offs = 0;
 	while(busy) {
 
 		while(SDL_PollEvent(&event))
@@ -142,11 +146,18 @@ int main(int argc, char *argv[]) {
 		SDL_BlitSurface(backdrop, NULL, screen.surface, NULL);
 
 #if 1
-		memset(&buf, 0, BUF_SIZE);
-		rxb = ftdi_read_data(ftdic, buf, BUF_SIZE);
+		printf("Read %d bytes, offset = %d\n", BUF_SIZE - offs, offs);
+		rxb = ftdi_read_data(ftdic, &buf[offs], BUF_SIZE - offs);
+		if(rxb != 0)
+			printf("Got %d bytes\n", rxb);
+//		if(rxb != 0) 
+//			printf("* rxb = %2d, offs = %2d\n", rxb, offs);
 
 		if(rxb > 0) {
 			if(rxb == BUF_SIZE) {
+
+				offs = 0;
+
 				if(buf[BUF_SIZE - 1] == 10 && 
 				   buf[BUF_SIZE - 2] == 13) {
 #endif
@@ -161,7 +172,7 @@ int main(int argc, char *argv[]) {
 						y = -256 + (rand() % 512);
 #endif
 
-						printf("%4d %4d %4d\n", x, y, z);
+						printf("\e[32mGREAT SUCCESS\e[0m %4d %4d %4d\n", x, y, z);
 						//printf("%1.3f %1.3f %1.3f\n", 
 						//       x / 256.0, 
 						//       y / 256.0, 
@@ -180,11 +191,19 @@ int main(int argc, char *argv[]) {
 				} else {
 					fprintf(stderr, "Packet of right length but wrong signature\n");
 				}
-			} else {
+			} else if(rxb < BUF_SIZE) { // Underrun? 
 				fprintf(stderr, "Packet of unknown size %ld\n", rxb);
+				offs += rxb;
+				if(offs > BUF_SIZE) { 
+					fprintf(stderr, "Appending won't fit\n"); // FIXME
+					offs = 0;
+				}
+
+			} else {
+				abort();
 			}
 		} else if(rxb < 0){
-			fprintf(stderr, "RX Error: %ld\n", rxb);
+			fprintf(stderr, "RX Error: %ld: %s\n", rxb, ftdi_get_error_string(ftdic));
 		}
 
 		for(i = TAIL_COUNT - 1; i >= 0; i--) {
