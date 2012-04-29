@@ -18,11 +18,15 @@ Basic concept:
 
 TODO:
 [X] (Stupid) get slackware to understand (udev?) that I'm the owner of ttyUSB*
-[!] Make slackbuild for libftdi-git (this is nontrivial as it uses a custom
+[X] Make slackbuild for libftdi-git (this is nontrivial as it uses a custom
 				     make system)
+    !!! Ignore below - I've solved it by fixing bugs in the SlackBuild !!!
     *** I gave up on this, the build system is to esoteric; I spent over
         an hour figuring out how to do it, but it seems impossible. Perhaps
 	the git version is not compilable at this time ***
+	Note: 32-bit binary just won't do. I can't even compile libgam
+	against it. There's got to be away around this, but I just cba to
+	embark on this fucking epic journey of bitwars right now.
 [X] Install precompiled libftdi version, 32-bit
 	- Very difficult to compile. Has required a LOT of additional mods
 	  to the build script. Now I'm stuck because libusb, from libcompat,
@@ -38,10 +42,7 @@ TODO:
 	  Finally did it. 32-bit it is.
 
 
-    [ ] Make slackbuild for libusb (required by liftdi)
-    [ ] Make slackbuild for libconfuse (required by libftdi)
-
-[ ] Write C/C++ interface using libftdi to pull serial data from the receiver
+[X] Write C/C++ interface using libftdi to pull serial data from the receiver
    [ ] Expand interface to become a full-fledged stellarium plugin(C++),
       see http://bazaar.launchpad.net/~stellarium/stellarium/trunk/view/head:/plugins/HelloStelModule/src/HelloStelModule.hpp
 [ ] Try to salvage the broken heading board:

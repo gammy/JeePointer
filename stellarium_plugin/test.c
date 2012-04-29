@@ -1,9 +1,5 @@
 #include "test.h"
 
-/**
-  * Initialize libftdic and the chip.
-  * @returns *ftdic_context or NULL
-  */
 struct ftdi_context *
 bub_init(unsigned int baud_rate,
 	 unsigned char latency,
@@ -54,42 +50,46 @@ bub_init(unsigned int baud_rate,
 	if(rx_buf_size > 0)
 		ftdi_read_data_set_chunksize(ftdic, rx_buf_size);
 
-	unsigned char tmp = 0;
-
-	unsigned int i = 0;
-
 	return(ftdic);
 }
 
+#define BUF_SIZE	8
+
 int main(int argc, char *argv[]) {
 
-	struct ftdi_context *ftdic = bub_init(57600, 1, 0, 0);
+	struct ftdi_context *ftdic = bub_init(57600, 1, 0, BUF_SIZE);
 
 	if(ftdic == NULL)
 		abort();
 	
 	printf("Ready.\n");
 	
-	unsigned char buf[512];
-	memset(&buf, 0, 512);
+	uint8_t buf[BUF_SIZE];
+	memset(&buf, 0, BUF_SIZE);
 
-	int offs = 0;
 	long rxb = -1;
 
 	for(;;) {
 
-		unsigned char c = 0;
-		rxb = ftdi_read_data(ftdic, &c, 1);
-		if(rxb == 1 && c != 0) {
-			buf[offs] = c;
-			offs++;
-			if(c == 10) {
-				buf[offs] = buf[offs - 1] = 0;
-				//printf("Buf, %d bytes: %s", offs, buf);
-				puts(buf);
-				memset(&buf, 0, 512);
-				offs = 0;
+		memset(&buf, 0, BUF_SIZE);
+		rxb = ftdi_read_data(ftdic, buf, BUF_SIZE);
+
+		if(rxb == BUF_SIZE) {
+
+			if(buf[BUF_SIZE - 1] == 10 && 
+			   buf[BUF_SIZE - 2] == 13) {
+
+					int16_t x, y, z;
+
+					x = (buf[1] << 8) ^ buf[0];
+					y = (buf[3] << 8) ^ buf[2];
+					z = (buf[5] << 8) ^ buf[4];
+
+					printf("%4d %4d %4d\n", x, y, z);
 			}
+		} else {
+			if(rxb != 0)
+				printf("Nope, got %ld\n", rxb);
 		}
 
 	}
