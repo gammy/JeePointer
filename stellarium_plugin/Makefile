@@ -3,7 +3,7 @@ EXE = test
 SHELL = bash
 
 CFLAGS = -Wall
-LFLAGS = -lftdi
+LFLAGS = -lftdi -lgam
 CC     = gcc
 OBJS   = $(patsubst %.c, %.o, $(wildcard ./*.c))
 

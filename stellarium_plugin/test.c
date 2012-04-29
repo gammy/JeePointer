@@ -1,5 +1,9 @@
 #include "test.h"
 
+#define GAM_USE_LIBPNG
+#include "libgam.h"
+
+
 struct ftdi_context *
 bub_init(unsigned int baud_rate,
 	 unsigned char latency,
@@ -57,10 +61,12 @@ bub_init(unsigned int baud_rate,
 
 int main(int argc, char *argv[]) {
 
+	/** COMMS ************************************************************/ 
+
 	struct ftdi_context *ftdic = bub_init(57600, 1, 0, BUF_SIZE);
 
 	if(ftdic == NULL)
-		abort();
+		abort(); // FIXME
 	
 	printf("Ready.\n");
 	
@@ -69,7 +75,62 @@ int main(int argc, char *argv[]) {
 
 	long rxb = -1;
 
-	for(;;) {
+	/** GFX **************************************************************/ 
+
+	gam_screen screen = {
+		.w       = 512,
+		.h       = 512,
+		.depth   = 32,
+		.flags   = SDL_HWACCEL | SDL_DOUBLEBUF,
+		.info    = 0,
+		.surface = NULL
+	};
+
+	if(gam_video_init(&screen) != 0)
+		return(EXIT_FAILURE);
+	
+	SDL_Surface *backdrop = 
+			gam_get_surface_from_png_file("backdrop.png", SDL_HWSURFACE);
+	if(backdrop == NULL){
+		fprintf(stderr, "Can't allocate surface: %s\n", SDL_GetError());
+		return(EXIT_FAILURE);
+	}
+
+	
+	SDL_Surface *spot = gam_get_surface_from_png_file("spot.png", SDL_HWSURFACE);
+	//SDL_Surface *spot = gam_get_surface_sphere(screen.surface, 100);
+	if(spot == NULL){
+		fprintf(stderr, "Can't allocate surface: %s\n", SDL_GetError());
+		return(EXIT_FAILURE);
+	}
+
+	SDL_SetColorKey(spot, 
+			SDL_SRCCOLORKEY,
+			SDL_MapRGB(spot->format, 255, 255, 255));
+
+	if(spot == NULL){
+		fprintf(stderr, "Can't allocate surface: %s\n", SDL_GetError());
+		return(EXIT_FAILURE);
+	}
+
+	/*********************************************************************/ 
+
+	struct { 
+		int x, y, z;
+	} point = {.5 * screen.w, .5 * screen.w, 0};
+	//} point = {0, 0, 0};
+
+	SDL_Event event;
+	SDL_Rect rect;
+	int busy = 1;
+	while(busy) {
+
+		while(SDL_PollEvent(&event))
+			if(event.type == SDL_KEYDOWN)
+				if(event.key.keysym.sym == SDLK_ESCAPE)
+					busy = 0;
+	
+		SDL_BlitSurface(backdrop, NULL, screen.surface, NULL);
 
 		memset(&buf, 0, BUF_SIZE);
 		rxb = ftdi_read_data(ftdic, buf, BUF_SIZE);
@@ -86,12 +147,17 @@ int main(int argc, char *argv[]) {
 					z = (buf[5] << 8) ^ buf[4];
 
 					printf("%4d %4d %4d\n", x, y, z);
+
+					rect.x = point.x - (.5 * spot->w);
+					rect.y = point.y - (.5 * spot->h);
 			}
 		} else {
 			if(rxb != 0)
 				printf("Nope, got %ld\n", rxb);
 		}
 
+		SDL_BlitSurface(spot, NULL, screen.surface, &rect);
+		SDL_Flip(screen.surface);
 	}
 
 	int ret = 0;
