@@ -1,7 +1,7 @@
-/*
- * Stellarium Example Painter Plug-in
+/* Tactor plugin interface
+ * 	based on the PainterExample plugin by Bogdan Marinov
  * 
- * Copyright (C) 2010 Bogdan Marinov
+ * Copyright (C) 2012 gammy
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,11 +23,20 @@
 
 #include "StelModule.hpp"
 #include "StelMovementMgr.hpp"
+#include "StelApp.hpp"
+#include "StelModuleMgr.hpp"
+#include "StelCore.hpp"
+#include "StelUtils.hpp"
+#include "StelPainter.hpp"
+#include "VecMath.hpp" //For coordinate vectors
 
+#include <ftdi.hpp>
+
+#include <stdexcept>
+
+#include <QDebug>
 #include <QFont>
 
-
-//! Main class of the plug-in
 class JeeScope : public StelModule
 {
 	Q_OBJECT
@@ -45,13 +54,14 @@ public:
 	
 	///////////////////////////////////////////////////////////////////////////
 	// Methods specific to JeeScope
+	virtual int getAxes(int *x, int *y);
 	
 public slots:
 	
 private:
 	QFont font;
 	StelMovementMgr *movementMgr;
-	double tactor_x, tactor_y;
+	Ftdi::Context databus;
 };
 
 

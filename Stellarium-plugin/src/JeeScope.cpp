@@ -7,10 +7,9 @@
  * http://stellarium.org/doc/head/classStelMovementMgr.html
  *
  * TODO:
- * [ ] Lock keys if loaded?
- * [ ] Use StelMovementMgr.panView to adjust camera
+ * [X] Use StelMovementMgr.panView to adjust camera
  *     panView takes Azimuth, Altitude in radians
- * [ ] Get data from serial line
+ * [ ] Get data from serial line (port my C ftdi code to C++)
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -28,17 +27,6 @@
  */
 
 #include "JeeScope.hpp"
-
-#include "StelApp.hpp"
-#include "StelModuleMgr.hpp"
-
-//Both necessary for drawing:
-#include "StelCore.hpp"
-#include "StelPainter.hpp"
-#include "VecMath.hpp" //For coordinate vectors
-
-#include <QDebug>
-#include <stdexcept>
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -83,15 +71,11 @@ void JeeScope::init()
 {
 	qDebug() << "JeeScope::init()";
 
-	movementMgr = GETSTELMODULE(StelMovementMgr);
-
-	movementMgr->setMountMode(StelMovementMgr::MountAltAzimuthal);
-	tactor_x = tactor_y = 0.0f;
-
-
-
 	try
 	{
+		movementMgr = GETSTELMODULE(StelMovementMgr);
+
+		databus.set_interface(INTERFACE_A);
 
 		// TODO: Init FTDI?
 	}
@@ -100,6 +84,10 @@ void JeeScope::init()
 		qWarning() << "JeeScope::init() error: " << e.what();
 		return;
 	}
+	
+	//movementMgr->setMountMode(StelMovementMgr::MountAltAzimuthal);
+	movementMgr->setEquatorialMount(false);
+
 }
 
 void JeeScope::deinit()
@@ -109,13 +97,25 @@ void JeeScope::deinit()
 
 void JeeScope::update(double deltaTime)
 {
-	tactor_x = 0.01f;
-	//tactor_x += 0.00001f;
+	int tactor_x, tactor_y;
+	if(! getAxes(&tactor_x, &tactor_y)) // No new axial data? Pass through, 
+		return;                     // allowing the arrow keys to work.
 
-	//if(tactor_x > 1.0f)
-	//	tactor_x = -1.0f;
+	// Quantize values (input on both axes is -256 to 256)
+	// Altitude: -90 to 90 degrees  (vertical angle)
+	// Azimuth :   0 to 360 degrees (horizontal angle)
+	double deg_azi = ((256 + tactor_x) / 512.0f) * 360.0f;
+	double deg_alt = -90.0f + ((256 + tactor_y) / 512.0f) * 180;
 
-	movementMgr->panView(tactor_x, tactor_y);
+	// Translate alt/azi angles to J200 & orient viewport (stolen from scripting system)
+	Vec3d aim;
+	double dAlt = StelUtils::getDecAngle(QString::number(deg_alt));
+	double dAzi = M_PI - StelUtils::getDecAngle(QString::number(deg_azi));
+
+	StelUtils::spheToRect(dAzi, dAlt, aim);
+	float duration = 0; // Instantly move
+	movementMgr->moveToJ2000(StelApp::getInstance().getCore()->altAzToJ2000(aim, StelCore::RefractionOff), duration);
+
 
 }
 
@@ -146,5 +146,32 @@ bool JeeScope::configureGui(bool show)
 {
 	//This plug-in has no GUI for configuration
 	return false;
+}
+
+int JeeScope::getAxes(int *tactor_x, int *tactor_y)
+{
+
+	int x = *tactor_x;
+	int y = *tactor_y;
+
+	// Read data
+	// No new data?
+	// return(0)
+
+	// Clip
+	if(x < -256)
+		x = -256;
+	if(x > 256)
+		x = 256;
+
+	if(y < -256)
+		y = -256;
+	if(y > 256)
+		y = 256;
+
+	*tactor_x = x;
+	*tactor_y = y;
+
+	return(1);
 }
 

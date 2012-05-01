@@ -39,7 +39,7 @@ SET(JeeScope_MOC_HDRS
 # After this call, JeeScope_MOC_SRCS = moc_JeeScope.cxx
 QT4_WRAP_CPP(JeeScope_MOC_SRCS ${JeeScope_MOC_HDRS})
 
-SET(extLinkerOption ${QT_LIBRARIES} ${JPEG_LIBRARIES} ${PNG_LIBRARIES} ${OPENGL_LIBRARIES} ${ICONV_LIBRARIES} ${INTL_LIBRARIES})
+SET(extLinkerOption ${FTDI_LIBRARIES} ${QT_LIBRARIES} ${JPEG_LIBRARIES} ${PNG_LIBRARIES} ${OPENGL_LIBRARIES} ${ICONV_LIBRARIES} ${INTL_LIBRARIES})
 
 ############### For building the dynamic library ######################
 IF(BUILD_DYNAMIC_LIB)
