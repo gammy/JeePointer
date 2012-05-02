@@ -28,6 +28,7 @@
 
 #include "JeeScope.hpp"
 
+#include <sstream>
 
 ////////////////////////////////////////////////////////////////////////////////
 // 
@@ -69,26 +70,43 @@ JeeScope::~JeeScope()
 // init(), update(), draw(), setStelStyle(), getCallOrder()
 void JeeScope::init()
 {
+	initialized = false;
+
 	qDebug() << "JeeScope::init()";
 
 	try
 	{
 		movementMgr = GETSTELMODULE(StelMovementMgr);
 
-		databus.set_interface(INTERFACE_A);
-		databus.open(0x0403, 0x6001);
+		// FTDI
+		std::ostringstream tmpErr;
 
-		// TODO: Init FTDI?
+		databus.set_interface(INTERFACE_A);
+		int r = databus.open(0x0403, 0x6001);
+		if(r < 0) {
+			tmpErr << "FTDI set_interface  " << r << ": " << databus.error_string();
+			throw std::runtime_error(tmpErr.str());
+		}
+
 	}
-	catch (std::runtime_error &e)
+	catch (std::exception &e)
 	{
 		qWarning() << "JeeScope::init() error: " << e.what();
 		return;
 	}
 	
-	//movementMgr->setMountMode(StelMovementMgr::MountAltAzimuthal);
+
+	databus.reset();
+	databus.bitbang_disable();
+	databus.set_baud_rate(57600);
+	databus.set_latency(1);
+	databus.set_read_chunk_size(8);
+	databus.set_write_chunk_size(8);
+	databus.flush(databus.Input);
+		
 	movementMgr->setEquatorialMount(false);
 
+	initialized = true;
 }
 
 void JeeScope::deinit()
@@ -98,6 +116,9 @@ void JeeScope::deinit()
 
 void JeeScope::update(double deltaTime)
 {
+	if(! initialized)
+		return;
+
 	int tactor_x, tactor_y;
 	if(! getAxes(&tactor_x, &tactor_y)) // No new axial data? Pass through, 
 		return;                     // allowing the arrow keys to work.
@@ -122,6 +143,9 @@ void JeeScope::update(double deltaTime)
 
 void JeeScope::draw(StelCore* core)
 {
+	if(! initialized)
+		return;
+
 	StelPainter painter2D(core->getProjection2d());
 
 	int w = core->getProjection2d()->getViewportWidth();

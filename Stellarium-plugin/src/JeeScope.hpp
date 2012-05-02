@@ -33,6 +33,7 @@
 #include <ftdi.hpp>
 
 #include <stdexcept>
+//#include <sstream>
 
 #include <QDebug>
 #include <QFont>
@@ -51,9 +52,7 @@ public:
 	virtual void draw(StelCore * core);
 	virtual double getCallOrder(StelModuleActionName actionName) const;
 	virtual bool configureGui(bool show);
-	
 	///////////////////////////////////////////////////////////////////////////
-	// Methods specific to JeeScope
 	virtual int getAxes(int *x, int *y);
 	
 public slots:
@@ -62,6 +61,7 @@ private:
 	QFont font;
 	StelMovementMgr *movementMgr;
 	Ftdi::Context databus;
+	bool initialized;
 };
 
 
