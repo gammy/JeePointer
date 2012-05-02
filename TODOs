@@ -43,9 +43,11 @@ TODO:
 
 
 [X] Write C/C++ interface using libftdi to pull serial data from the receiver
-   [ ] Expand interface to become a full-fledged stellarium plugin(C++),
+   [X] Expand interface to become a full-fledged stellarium plugin(C++),
       see http://bazaar.launchpad.net/~stellarium/stellarium/trunk/view/head:/plugins/HelloStelModule/src/HelloStelModule.hpp
-[ ] Try to salvage the broken heading board:
-    it has temp&hum onboard as well as a heading instrument(compass + z-axis):
-[ ] Make my own 'plug' for an LDR so that we can, ultimately, togle night-mode
+[X] Try to salvage the broken heading board:
+    it has temp&hum onboard as well as a heading instrument(compass + z-axis);
+    heading board now recovered, but the angle measure is shit. Waiting
+    for new compass board.
+[ ] Make my own 'plug' for an LDR so that we can, ultimately, toggle night-mode
     in stellarium if it's dark.

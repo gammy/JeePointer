@@ -147,7 +147,6 @@ int main(int argc, char *argv[]) {
 	SDL_Event event;
 	SDL_Rect rect;
 	int busy = 1;
-	int offs = 0;
 	while(busy) {
 
 		while(SDL_PollEvent(&event))
@@ -157,12 +156,10 @@ int main(int argc, char *argv[]) {
 	
 		SDL_BlitSurface(backdrop, NULL, screen.surface, NULL);
 
-		rxb = ftdi_read_data(ftdic, &buf[offs], BUF_SIZE - offs);
+		rxb = ftdi_read_data(ftdic, buf, BUF_SIZE);
 
 		if(rxb > 0) {
 			if(rxb == BUF_SIZE) {
-
-				offs = 0;
 
 				if(buf[BUF_SIZE - 1] == 10 && 
 				   buf[BUF_SIZE - 2] == 13) {
