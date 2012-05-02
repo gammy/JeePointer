@@ -21,6 +21,8 @@
 #ifndef _JEESCOPE_HPP_
 #define _JEESCOPE_HPP_
 
+#define JEESCOPE_BUF_SIZE (unsigned int) 8
+
 #include "StelModule.hpp"
 #include "StelMovementMgr.hpp"
 #include "StelApp.hpp"
@@ -30,10 +32,10 @@
 #include "StelPainter.hpp"
 #include "VecMath.hpp" //For coordinate vectors
 
+#include <stdint.h>
 #include <ftdi.hpp>
 
 #include <stdexcept>
-//#include <sstream>
 
 #include <QDebug>
 #include <QFont>
@@ -62,6 +64,7 @@ private:
 	StelMovementMgr *movementMgr;
 	Ftdi::Context databus;
 	bool initialized;
+	unsigned char buf[JEESCOPE_BUF_SIZE];
 };
 
 

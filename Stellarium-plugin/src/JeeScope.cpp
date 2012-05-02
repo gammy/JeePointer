@@ -82,6 +82,7 @@ void JeeScope::init()
 		std::ostringstream tmpErr;
 
 		databus.set_interface(INTERFACE_A);
+
 		int r = databus.open(0x0403, 0x6001);
 		if(r < 0) {
 			tmpErr << "FTDI set_interface  " << r << ": " << databus.error_string();
@@ -100,8 +101,8 @@ void JeeScope::init()
 	databus.bitbang_disable();
 	databus.set_baud_rate(57600);
 	databus.set_latency(1);
-	databus.set_read_chunk_size(8);
-	databus.set_write_chunk_size(8);
+	databus.set_read_chunk_size(JEESCOPE_BUF_SIZE);
+	databus.set_write_chunk_size(JEESCOPE_BUF_SIZE);
 	databus.flush(databus.Input);
 		
 	movementMgr->setEquatorialMount(false);
@@ -178,10 +179,49 @@ int JeeScope::getAxes(int *tactor_x, int *tactor_y)
 
 	int x = *tactor_x;
 	int y = *tactor_y;
+						
+	int16_t x_new, y_new, z_new;
+	x_new = x;
+	y_new = y;
 
-	// Read data
+	int rb = databus.read(buf, JEESCOPE_BUF_SIZE);
+	if(rb > 0)
+	{
+		if(rb == JEESCOPE_BUF_SIZE)
+		{
+
+			if(buf[JEESCOPE_BUF_SIZE - 1] == 10 && 
+			   buf[JEESCOPE_BUF_SIZE - 2] == 13)
+			{
+
+				x_new = (buf[1] << 8) ^ buf[0];
+				y_new = (buf[3] << 8) ^ buf[2];
+				z_new = (buf[5] << 8) ^ buf[4];
+
+			}
+			else 
+			{
+				qWarning() << "Packet of right length but wrong signature" << endl;
+			}
+		}
+		else if((unsigned) rb < JEESCOPE_BUF_SIZE) 
+		{ // Underrun? 
+			qWarning() << "Packet of unknown size " << rb << endl;
+		}
+		else 
+		{
+			abort();
+		}
+	} else if(rb < 0){
+		qWarning() << "RX Error " << rb << ": " << databus.error_string() << endl;
+	}
+
 	// No new data?
-	// return(0)
+	if(x == x_new || y == y_new) 
+		return(0);
+
+	x = x_new;
+	y = y_new;
 
 	// Clip
 	if(x < -256)
