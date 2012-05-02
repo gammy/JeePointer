@@ -1,4 +1,4 @@
-/* Tactor plugin interface
+/* JeePointer plugin interface
  * 	based on the PainterExample plugin by Bogdan Marinov
  * 
  * Copyright (C) 2012 gammy
@@ -26,40 +26,40 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-#include "JeeScope.hpp"
+#include "JeePointer.hpp"
 
 #include <sstream>
 
 ////////////////////////////////////////////////////////////////////////////////
 // 
-StelModule* JeeScopeStelPluginInterface::getStelModule() const
+StelModule* JeePointerStelPluginInterface::getStelModule() const
 {
-	return new JeeScope();
+	return new JeePointer();
 }
 
-StelPluginInfo JeeScopeStelPluginInterface::getPluginInfo() const
+StelPluginInfo JeePointerStelPluginInterface::getPluginInfo() const
 {
 	StelPluginInfo info;
-	info.id = "JeeScope";
-	info.displayedName = "JeeScope Tactor";
+	info.id = "JeePointer";
+	info.displayedName = "JeePointer";
 	info.authors = "gammy";
 	info.contact = "gammy at pean dot org";
-	info.description = "Spatial awareness module. Allows Stellarium to obtain spatial information from the wireless Tactor.";
+	info.description = "Provides Stellarium with spatial information from a JeePointer.";
 	return info;
 }
 
-Q_EXPORT_PLUGIN2(JeeScope, JeeScopeStelPluginInterface)
+Q_EXPORT_PLUGIN2(JeePointer, JeePointerStelPluginInterface)
 
 
 ////////////////////////////////////////////////////////////////////////////////
 // Constructor and destructor
-JeeScope::JeeScope()
+JeePointer::JeePointer()
 {
-	setObjectName("JeeScope");
+	setObjectName("JeePointer");
 	font.setPixelSize(12);
 }
 
-JeeScope::~JeeScope()
+JeePointer::~JeePointer()
 {
 
 }
@@ -68,11 +68,11 @@ JeeScope::~JeeScope()
 ////////////////////////////////////////////////////////////////////////////////
 // Methods inherited from the StelModule class
 // init(), update(), draw(), setStelStyle(), getCallOrder()
-void JeeScope::init()
+void JeePointer::init()
 {
 	initialized = false;
 
-	qDebug() << "JeeScope::init()";
+	qDebug() << "JeePointer::init()";
 
 	try
 	{
@@ -92,7 +92,7 @@ void JeeScope::init()
 	}
 	catch (std::exception &e)
 	{
-		qWarning() << "JeeScope::init() error: " << e.what();
+		qWarning() << "JeePointer::init() error: " << e.what();
 		return;
 	}
 	
@@ -101,8 +101,8 @@ void JeeScope::init()
 	databus.bitbang_disable();
 	databus.set_baud_rate(57600);
 	databus.set_latency(1);
-	databus.set_read_chunk_size(JEESCOPE_BUF_SIZE);
-	databus.set_write_chunk_size(JEESCOPE_BUF_SIZE);
+	databus.set_read_chunk_size(JEEPOINTER_BUF_SIZE);
+	databus.set_write_chunk_size(JEEPOINTER_BUF_SIZE);
 	databus.flush(databus.Input);
 		
 	movementMgr->setEquatorialMount(false);
@@ -110,25 +110,25 @@ void JeeScope::init()
 	initialized = true;
 }
 
-void JeeScope::deinit()
+void JeePointer::deinit()
 {
-	qDebug() << "JeeScope::deinit()";
+	qDebug() << "JeePointer::deinit()";
 }
 
-void JeeScope::update(double deltaTime)
+void JeePointer::update(double deltaTime)
 {
 	if(! initialized)
 		return;
 
-	int tactor_x, tactor_y;
-	if(! getAxes(&tactor_x, &tactor_y)) // No new axial data? Pass through, 
+	int raw_x, raw_y;
+	if(! getAxes(&raw_x, &raw_y)) // No new axial data? Pass through, 
 		return;                     // allowing the arrow keys to work.
 
 	// Quantize values (input on both axes is -256 to 256)
 	// Altitude: -90 to 90 degrees  (vertical angle)
 	// Azimuth :   0 to 360 degrees (horizontal angle)
-	double deg_azi = ((256 + tactor_x) / 512.0f) * 360.0f;
-	double deg_alt = -90.0f + ((256 + tactor_y) / 512.0f) * 180;
+	double deg_azi = ((256 + raw_x) / 512.0f) * 360.0f;
+	double deg_alt = -90.0f + ((256 + raw_y) / 512.0f) * 180;
 
 	// Translate alt/azi angles to J200 & orient viewport (stolen from scripting system)
 	Vec3d aim;
@@ -142,7 +142,7 @@ void JeeScope::update(double deltaTime)
 
 }
 
-void JeeScope::draw(StelCore* core)
+void JeePointer::draw(StelCore* core)
 {
 	if(! initialized)
 		return;
@@ -156,42 +156,42 @@ void JeeScope::draw(StelCore* core)
 	painter2D.setFont(font);
 	painter2D.drawText((.5 * w) - 70, 
 			   h - (2 * 12), 
-			   "JeeScope mode");
+			   "JeePointer mode");
 	
 	
 }
 
-double JeeScope::getCallOrder(StelModuleActionName actionName) const
+double JeePointer::getCallOrder(StelModuleActionName actionName) const
 {
 	if (actionName == StelModule::ActionDraw)
 		return StelApp::getInstance().getModuleMgr().getModule("LandscapeMgr")->getCallOrder(actionName) + 3.;
 	return 0.;
 }
 
-bool JeeScope::configureGui(bool show)
+bool JeePointer::configureGui(bool show)
 {
 	//This plug-in has no GUI for configuration
 	return false;
 }
 
-int JeeScope::getAxes(int *tactor_x, int *tactor_y)
+int JeePointer::getAxes(int *raw_x, int *raw_y)
 {
 
-	int x = *tactor_x;
-	int y = *tactor_y;
+	int x = *raw_x;
+	int y = *raw_y;
 						
 	int16_t x_new, y_new, z_new;
 	x_new = x;
 	y_new = y;
 
-	int rb = databus.read(buf, JEESCOPE_BUF_SIZE);
+	int rb = databus.read(buf, JEEPOINTER_BUF_SIZE);
 	if(rb > 0)
 	{
-		if(rb == JEESCOPE_BUF_SIZE)
+		if(rb == JEEPOINTER_BUF_SIZE)
 		{
 
-			if(buf[JEESCOPE_BUF_SIZE - 1] == 10 && 
-			   buf[JEESCOPE_BUF_SIZE - 2] == 13)
+			if(buf[JEEPOINTER_BUF_SIZE - 1] == 10 && 
+			   buf[JEEPOINTER_BUF_SIZE - 2] == 13)
 			{
 
 				x_new = (buf[1] << 8) ^ buf[0];
@@ -204,7 +204,7 @@ int JeeScope::getAxes(int *tactor_x, int *tactor_y)
 				qWarning() << "Packet of right length but wrong signature" << endl;
 			}
 		}
-		else if((unsigned) rb < JEESCOPE_BUF_SIZE) 
+		else if((unsigned) rb < JEEPOINTER_BUF_SIZE) 
 		{ // Underrun? 
 			qWarning() << "Packet of unknown size " << rb << endl;
 		}
@@ -234,8 +234,8 @@ int JeeScope::getAxes(int *tactor_x, int *tactor_y)
 	if(y > 256)
 		y = 256;
 
-	*tactor_x = x;
-	*tactor_y = y;
+	*raw_x = x;
+	*raw_y = y;
 
 	return(1);
 }

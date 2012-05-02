@@ -1,4 +1,4 @@
-/* Tactor plugin interface
+/* JeePointer plugin interface
  * 	based on the PainterExample plugin by Bogdan Marinov
  * 
  * Copyright (C) 2012 gammy
@@ -18,10 +18,10 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
 
-#ifndef _JEESCOPE_HPP_
-#define _JEESCOPE_HPP_
+#ifndef _JEEPOINTER_HPP_
+#define _JEEPOINTER_HPP_
 
-#define JEESCOPE_BUF_SIZE (unsigned int) 8
+#define JEEPOINTER_BUF_SIZE (unsigned int) 8
 
 #include "StelModule.hpp"
 #include "StelMovementMgr.hpp"
@@ -40,13 +40,13 @@
 #include <QDebug>
 #include <QFont>
 
-class JeeScope : public StelModule
+class JeePointer : public StelModule
 {
 	Q_OBJECT
 
 public:
-	JeeScope();
-	virtual ~JeeScope();
+	JeePointer();
+	virtual ~JeePointer();
 	
 	virtual void init();
 	virtual void deinit();
@@ -64,7 +64,7 @@ private:
 	StelMovementMgr *movementMgr;
 	Ftdi::Context databus;
 	bool initialized;
-	unsigned char buf[JEESCOPE_BUF_SIZE];
+	unsigned char buf[JEEPOINTER_BUF_SIZE];
 };
 
 
@@ -73,7 +73,7 @@ private:
 #include "StelPluginInterface.hpp"
 
 //! This class is used by Qt to manage a plug-in interface
-class JeeScopeStelPluginInterface : public QObject, public StelPluginInterface
+class JeePointerStelPluginInterface : public QObject, public StelPluginInterface
 {
 	Q_OBJECT
 	Q_INTERFACES(StelPluginInterface)
@@ -82,4 +82,4 @@ public:
 	virtual StelPluginInfo getPluginInfo() const;
 };
 
-#endif /*_JEESCOPE_HPP_*/
+#endif /*_JEEPOINTER_HPP_*/
