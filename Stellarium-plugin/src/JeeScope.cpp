@@ -76,6 +76,7 @@ void JeeScope::init()
 		movementMgr = GETSTELMODULE(StelMovementMgr);
 
 		databus.set_interface(INTERFACE_A);
+		databus.open(0x0403, 0x6001);
 
 		// TODO: Init FTDI?
 	}

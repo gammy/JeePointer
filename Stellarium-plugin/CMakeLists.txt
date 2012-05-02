@@ -13,11 +13,6 @@ SET(PACKAGE JeeScope)
 SET(BUILD_STATIC_LIB 0 CACHE BOOL "Build the static version of the library.")
 SET(BUILD_DYNAMIC_LIB 1 CACHE BOOL "Build the dynamic (plugin) version of the library.")
 
-SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH})
-
-SET(FTDI_DIR "${CMAKE_SOURCE_DIR}/CMakeFiles/Modules/")
-MESSAGE(STATUS "Looking for FTDI in ${FTDI_DIR}")
-
 IF(APPLE)
 	SET(CMAKE_INSTALL_PREFIX $ENV{HOME}/Library/Application\ Support/Stellarium)
 ElSEIF(WIN32)
@@ -69,7 +64,7 @@ IF(APPLE)
 ENDIF(APPLE)
 
 ########### Find packages ###########
-SET(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+SET(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMakeFiles/Modules/")
 SET(QT_MIN_VERSION "4.6.0")
 FIND_PACKAGE(Qt4 REQUIRED)
 SET(QT_USE_QTOPENGL TRUE)
