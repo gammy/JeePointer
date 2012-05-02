@@ -13,6 +13,11 @@ SET(PACKAGE JeeScope)
 SET(BUILD_STATIC_LIB 0 CACHE BOOL "Build the static version of the library.")
 SET(BUILD_DYNAMIC_LIB 1 CACHE BOOL "Build the dynamic (plugin) version of the library.")
 
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "/home/david/code/JeeScope/CMakeFiles/Modules/")
+MESSAGE(STATUS "Looking for things in ${CMAKE_MODULE_PATH}")
+
+SET(FTDI_DIR "/home/david/code/JeeScope/CMakeFiles/Modules/")
+
 IF(APPLE)
 	SET(CMAKE_INSTALL_PREFIX $ENV{HOME}/Library/Application\ Support/Stellarium)
 ElSEIF(WIN32)

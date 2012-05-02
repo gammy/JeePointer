@@ -30,8 +30,10 @@ ELSE(WIN32)
 		/usr/local/include/libftdi
 	)
 
-	FIND_LIBRARY(FTDI_LIBRARY NAMES ftdi
+	FIND_LIBRARY(FTDI_LIBRARY NAMES ftdipp
 		PATHS	/usr/lib64
+		/usr/lib
+		/usr/local/lib
 		/usr/local/lib64
 	)
 ENDIF(WIN32)
