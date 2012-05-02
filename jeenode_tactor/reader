@@ -1,8 +1,0 @@
-#!/bin/bash
-
-PORT=$1
-SPEED=57600
-
-stty -F ${PORT} cs8 ${SPEED} ignbrk -brkint -icrnl -imaxbel -opost -onlcr -isig -icanon -iexten -echo -echoe -echok -echoctl -echoke noflsh -ixon -crtscts 
-
-tail -f -s 0.1 ${PORT} 
