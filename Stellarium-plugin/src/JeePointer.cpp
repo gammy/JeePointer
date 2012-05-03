@@ -78,16 +78,14 @@ void JeePointer::init()
 	{
 		movementMgr = GETSTELMODULE(StelMovementMgr);
 
-		// FTDI
-		std::ostringstream tmpErr;
-
 		databus.set_interface(INTERFACE_A);
 
 		int r = databus.open(0x0403, 0x6001);
-		if(r < 0) {
-			tmpErr << "FTDI set_interface  " << r << ": " << databus.error_string();
-			throw std::runtime_error(tmpErr.str());
-		}
+		//if(r < 0) {
+		//	std::ostringstream tmpErr;
+		//	tmpErr << "FTDI set_interface  " << r << ": " << databus.error_string();
+		//	throw std::runtime_error(tmpErr.str());
+		//}
 
 	}
 	catch (std::exception &e)
@@ -100,9 +98,9 @@ void JeePointer::init()
 	databus.reset();
 	databus.bitbang_disable();
 	databus.set_baud_rate(57600);
-	databus.set_latency(1);
-	databus.set_read_chunk_size(JEEPOINTER_BUF_SIZE);
-	databus.set_write_chunk_size(JEEPOINTER_BUF_SIZE);
+	databus.set_latency(0);
+	databus.set_read_chunk_size(32 * JEEPOINTER_BUF_SIZE);
+	databus.set_write_chunk_size(32 * JEEPOINTER_BUF_SIZE);
 	databus.flush(databus.Input);
 		
 	movementMgr->setEquatorialMount(false);
@@ -123,6 +121,8 @@ void JeePointer::update(double deltaTime)
 	int raw_x, raw_y;
 	if(! getAxes(&raw_x, &raw_y)) // No new axial data? Pass through, 
 		return;                     // allowing the arrow keys to work.
+
+	//raw_x = 0;
 
 	// Quantize values (input on both axes is -256 to 256)
 	// Altitude: -90 to 90 degrees  (vertical angle)
@@ -201,19 +201,19 @@ int JeePointer::getAxes(int *raw_x, int *raw_y)
 			}
 			else 
 			{
-				qWarning() << "Packet of right length but wrong signature" << endl;
+				qWarning() << "Packet of right length but wrong signature";
 			}
 		}
 		else if((unsigned) rb < JEEPOINTER_BUF_SIZE) 
 		{ // Underrun? 
-			qWarning() << "Packet of unknown size " << rb << endl;
+			qWarning() << "Packet of unknown size " << rb;
 		}
 		else 
 		{
 			abort();
 		}
 	} else if(rb < 0){
-		qWarning() << "RX Error " << rb << ": " << databus.error_string() << endl;
+		qWarning() << "RX Error " << rb << ": " << databus.error_string();
 	}
 
 	// No new data?
