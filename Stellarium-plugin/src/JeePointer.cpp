@@ -130,13 +130,15 @@ void JeePointer::update(double deltaTime)
 	double deg_azi = ((256 + raw_x) / 512.0f) * 360.0f;
 	double deg_alt = -90.0f + ((256 + raw_y) / 512.0f) * 180;
 
+	deg_alt *= -1;
+
 	// Translate alt/azi angles to J200 & orient viewport (stolen from scripting system)
 	Vec3d aim;
 	double dAlt = StelUtils::getDecAngle(QString::number(deg_alt));
 	double dAzi = M_PI - StelUtils::getDecAngle(QString::number(deg_azi));
 
 	StelUtils::spheToRect(dAzi, dAlt, aim);
-	float duration = 0; // Instantly move
+	float duration = 0.5f; // Instantly move
 	movementMgr->moveToJ2000(StelApp::getInstance().getCore()->altAzToJ2000(aim, StelCore::RefractionOff), duration);
 
 
